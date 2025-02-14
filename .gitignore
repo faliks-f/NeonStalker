@@ -1,0 +1,8 @@
+zhibo_robot/build
+zhibo_robot/cmake-build-release-gcc_ros
+zhibo_robot/src/piper/test.py
+
+cmake-*
+.idea
+
+*.tar
