@@ -32,13 +32,10 @@ void CarControl::setTrackResult(const std::vector<int16_t> &result) {
         m_distance = static_cast<int16_t>((m_distance * 5 - front + distance) / 5);
         m_trackResult.push(distance);
     }
-    std::cout << "average distance: " << int(m_distance) << std::endl;
-    if (m_distance > PHOTO_DISTANCE4CAR_FORWARD_LIMIT && m_distance < 4000) {
+    if (m_distance > PHOTO_DISTANCE4CAR_FORWARD_LIMIT && m_distance < 4000 && !m_blocked) {
         m_forwardSpeed = 0.1;
-        std::cout << "forward!!!!!!!!" << std::endl;
     } else if (m_distance < PHOTO_DISTANCE4CAR_BACKWARD_LIMIT) {
         m_forwardSpeed = -0.1;
-        std::cout << "back!!!!!" << std::endl;
     } else {
         m_forwardSpeed = 0;
     }

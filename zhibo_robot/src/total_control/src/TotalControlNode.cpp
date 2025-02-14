@@ -74,7 +74,7 @@ void TotalControlNode::trackResultCallback(const std_msgs::msg::Int16MultiArray 
     }
 //    std::cout << "set result: " << result[0] << " " << result[1] << " " << result[2] << " " << result[3] << std::endl;
     m_armControl->setTrackResult2(result);
-//    m_carControl->setTrackResult(result);
+    m_carControl->setTrackResult(result);
 }
 
 void TotalControlNode::cmdCallback(std_msgs::msg::Int8 msg) {
