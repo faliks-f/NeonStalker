@@ -1,14 +1,18 @@
 import threading
 import importlib
+import time
+
 import cv2
 import rclpy
-from std_msgs.msg import Int8, MultiArrayDimension, Int16MultiArray
-
-from ultralytics import YOLO
 
 from rclpy.node import Node
 from real_sense import RealsenseCamera
+from std_msgs.msg import Int8, MultiArrayDimension, Int16MultiArray
+from sensor_msgs.msg import Image
+from sensor_msgs.msg import CompressedImage
+from cv_bridge import CvBridge
 
+from ultralytics import YOLO
 import subprocess
 
 
@@ -32,32 +36,21 @@ class Track(Node):
         self.real_sense = RealsenseCamera()
 
         self.track_result_publisher = self.create_publisher(Int16MultiArray, 'track_result', 10)
-        self.start_track_subscriber = self.create_subscription(Int8, '/total_cmd', self.start_track_callback, 10)
+        self.start_track_subscriber = self.create_subscription(Int8, '/total_cmd', self.start_track_callback, 2)
+        self.img_publisher = self.create_publisher(CompressedImage, 'image_result', 15)
+        self.bridge = CvBridge()
+        self.result_img = None
 
         self.start_track = False
         self.init_track = False
 
         self.message = None
 
-        # ffmpeg_cmd = [
-        #     "ffmpeg",
-        #     "-y",  # 覆盖输出文件
-        #     "-f", "rawvideo",  # 原始视频流格式
-        #     "-vcodec", "rawvideo",  # 原始视频编码
-        #     "-pix_fmt", "bgr24",  # OpenCV 使用 BGR 格式
-        #     "-s", f"{640}x{480}",  # 视频分辨率
-        #     "-r", str(30),  # 帧率
-        #     "-i", "-",  # 输入来自标准输入
-        #     "-c:v", "h264_nvenc",  # 使用 x264 编码器
-        #     "-pix_fmt", "yuv420p",  # 像素格式
-        #     "-preset", "llhq",  # 编码速度
-        #     "-f", "flv",  # 输出格式为 FLV
-        #     rtmp_url  # 推流地址
-        # ]
-        # self.ffmpeg_process = subprocess.Popen(ffmpeg_cmd, stdin=subprocess.PIPE)
-
         thread = threading.Thread(target=self.run_video, args=(True,))
         thread.start()
+        # thread2 = threading.Thread(target=self.publish_img, args=(True,))
+        # thread2.start()
+
 
     def yolo_process(self, debug=False):
         color_frame, depth_image, depth_intrin, depth_frame = self.real_sense.get_aligned_images()
@@ -88,26 +81,39 @@ class Track(Node):
 
         return color_frame, max_res
 
+    def publish_img(self, debug=False):
+        # while True:
+            if self.result_img is None or not debug:
+                time.sleep(0.1)
+                # continue
+
+            msg = CompressedImage()
+            msg.format = "jpeg"
+            msg.data = cv2.imencode('.jpg', self.result_img, [cv2.IMWRITE_JPEG_QUALITY, 80])[1].tobytes()
+            self.img_publisher.publish(msg)
+
     def run_video(self, debug=False):
         while rclpy.ok():
             if not self.start_track and not self.init_track:
                 color_frame, max_res = self.yolo_process(debug)
                 # self.ffmpeg_process.stdin.write(color_frame.tobytes())
                 if debug:
-                    cv2.imshow("track", color_frame)
-                    cv2.waitKey(1)
+                    self.result_img = color_frame
+                    self.publish_img(debug)
+                    # cv2.imshow("track", color_frame)
+                    # cv2.waitKey(1)
             elif not self.init_track:
                 color_frame, max_res = self.yolo_process(debug)
-                # self.ffmpeg_process.stdin.write(color_frame.tobytes())
                 if debug:
-                    cv2.imshow("track", color_frame)
-                    cv2.waitKey(1)
+                    self.result_img = color_frame
+                    self.publish_img(debug)
+                    # cv2.imshow("track", color_frame)
+                    # cv2.waitKey(1)
                 if max_res is not None:
                     self.tracker.initialize(color_frame, _build_init_info(max_res))
                     self.init_track = True
             else:
                 color_frame, depth_image, depth_intrin, depth_frame = self.real_sense.get_aligned_images()
-                # self.ffmpeg_process.stdin.write(color_frame.tobytes())
                 color_frame = cv2.flip(color_frame, 1)
                 out = self.tracker.track(color_frame)
                 state = [int(s) for s in out['target_bbox']]
@@ -118,8 +124,10 @@ class Track(Node):
                                   (0, 0, 255), 5)
                     cv2.circle(color_frame, (state[0] + state[2] // 2, state[1] + state[3] * 2 // 3), 5,
                                (0, 0, 255), -1)
-                    cv2.imshow("track", color_frame)
-                    cv2.waitKey(1)
+                    self.result_img = color_frame
+                    self.publish_img(debug)
+                    # cv2.imshow("track", color_frame)
+                    # cv2.waitKey(1)
 
                 if self.message is None:
                     self.message = Int16MultiArray()
@@ -140,6 +148,7 @@ class Track(Node):
         elif msg.data == 9:
             self.start_track = False
             self.init_track = False
+            self.result_img = None
 
 
 def main(args=None):
