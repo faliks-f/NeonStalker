@@ -17,7 +17,7 @@ float TurnOnRobot::odomTrans(uint8_t dataHigh, uint8_t dataLow) {
 }
 
 /**************************************
-Function: The speed topic subscription Callback function, according to the subscribed instructions through the serial port command control of the lower computer
+Function: The speed topic subscription Callback function, according to the subscribed instructions through the serial port command armControl of the lower computer
 功能: 速度话题订阅回调函数Callback，根据订阅的指令通过串口发指令控制下位机
 ***************************************/
 void TurnOnRobot::cmdVelCallback(const geometry_msgs::msg::Twist &twistAux) {

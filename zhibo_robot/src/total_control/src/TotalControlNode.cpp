@@ -12,7 +12,7 @@ TotalControlNode::TotalControlNode(const std::string &name) : rclcpp::Node(name)
     m_armControl = std::make_shared<ArmControl>("arm_control");
     m_carControl = std::make_shared<CarControl>("car_control");
 
-    m_timer = nullptr;
+    m_timer1 = nullptr;
     m_jointSub = this->create_subscription<sensor_msgs::msg::JointState>(
             "joint_states_single", 10,
             [this](const sensor_msgs::msg::JointState::SharedPtr msg) {
@@ -45,8 +45,8 @@ TotalControlNode::TotalControlNode(const std::string &name) : rclcpp::Node(name)
             });
 }
 
-void TotalControlNode::control() {
-    m_armControl->move();
+void TotalControlNode::armControl() {
+    m_armControl->move2();
     m_carControl->move();
 //    m_armControl->publishJointStateOnce();
 //    static int i = 0;
@@ -78,38 +78,40 @@ void TotalControlNode::trackResultCallback(const std_msgs::msg::Int16MultiArray 
 }
 
 void TotalControlNode::cmdCallback(std_msgs::msg::Int8 msg) {
-    if (msg.data == 1) {
-        m_armControl->initPos();
-        cout << "init pos\n";
-        return;
-    }
-    if (msg.data == 2) {
-        m_armControl->clawGripper();
-        cout << "claw gripper\n";
-        return;
-    }
-    if (msg.data == 3) {
-        if (m_timer == nullptr) {
-            m_timer = this->create_wall_timer(std::chrono::milliseconds(50),
-                                              std::bind(&TotalControlNode::control, this));
-        }
-        m_start = true;
-        return;
-    }
-    if (msg.data == 8) {
-        m_armControl->releaseGripper();
-        cout << "release gripper\n";
-        return;
-    }
-    if (msg.data == 9) {
-        if (m_timer != nullptr) {
-            m_timer->reset();
-            m_timer = nullptr;
-        }
-        m_armControl->resetPos();
-        m_carControl->stop();
-        m_start = false;
-        return;
+
+    switch (msg.data) {
+        case 1:
+            m_armControl->initPos();
+            cout << "init pos\n";
+            break;
+        case 2:
+            m_armControl->clawGripper();
+            cout << "claw gripper\n";
+            break;
+        case 3:
+            if (m_timer1 == nullptr) {
+                m_timer1 = this->create_wall_timer(std::chrono::milliseconds(50),
+                                                   std::bind(&TotalControlNode::armControl, this));
+            }
+            m_start = true;
+            break;
+        case 4:
+            m_carControl->rotate2Forward();
+            cout << "rotate2Forward\n";
+            break;
+        case 8:
+            m_armControl->releaseGripper();
+            cout << "release gripper\n";
+            break;
+        case 9:
+            if (m_timer1 != nullptr) {
+                m_timer1->reset();
+                m_timer1 = nullptr;
+            }
+            m_armControl->resetPos();
+            m_carControl->stop();
+            m_start = false;
+            break;
     }
 }
 

@@ -13,7 +13,6 @@ python track.py
 ros2 launch turn_on_wheeltec_robot turn_on_wheeltec_robot.py
 ros2 launch piper start_single_piper.launch.py
 ros2 launch lslidar_driver_n10p lslidar_launch.py
-ros2 launch lidar_control lidar_control.py
 ros2 launch total_control total_control_launch.py
 ```
 

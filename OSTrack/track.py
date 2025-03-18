@@ -41,6 +41,10 @@ class Track(Node):
         self.bridge = CvBridge()
         self.result_img = None
 
+        self.color_img_writer = None
+        self.depth_img_writer = None
+        self.img_writer_index = 0
+
         self.start_track = False
         self.init_track = False
 
@@ -51,10 +55,16 @@ class Track(Node):
         # thread2 = threading.Thread(target=self.publish_img, args=(True,))
         # thread2.start()
 
-
     def yolo_process(self, debug=False):
         color_frame, depth_image, depth_intrin, depth_frame = self.real_sense.get_aligned_images()
         color_frame = cv2.flip(color_frame, 1)
+
+        if debug and self.color_img_writer is not None:
+            # depth_image = cv2.applyColorMap(depth_image, cv2.COLORMAP_JET)
+            # cv2.imshow("track", depth_image)
+            # cv2.waitKey(1)
+            self.color_img_writer.write(color_frame)
+            # self.depth_img_writer.write(depth_image)
         # self.ffmpeg_process.stdin.write(color_frame.tobytes())
         results = self.yolo_model(color_frame,
                                   classes=[0],
@@ -82,21 +92,22 @@ class Track(Node):
         return color_frame, max_res
 
     def publish_img(self, debug=False):
-        # while True:
-            if self.result_img is None or not debug:
-                time.sleep(0.1)
-                # continue
+        if self.result_img is None or not debug:
+            time.sleep(0.1)
+            return
+            # continue
 
-            msg = CompressedImage()
-            msg.format = "jpeg"
-            msg.data = cv2.imencode('.jpg', self.result_img, [cv2.IMWRITE_JPEG_QUALITY, 80])[1].tobytes()
-            self.img_publisher.publish(msg)
+        msg = CompressedImage()
+        msg.format = "jpeg"
+        msg.data = cv2.imencode('.jpg', self.result_img, [cv2.IMWRITE_JPEG_QUALITY, 80])[1].tobytes()
+        self.img_publisher.publish(msg)
 
     def run_video(self, debug=False):
         while rclpy.ok():
             if not self.start_track and not self.init_track:
                 color_frame, max_res = self.yolo_process(debug)
                 # self.ffmpeg_process.stdin.write(color_frame.tobytes())
+
                 if debug:
                     self.result_img = color_frame
                     self.publish_img(debug)
@@ -115,6 +126,9 @@ class Track(Node):
             else:
                 color_frame, depth_image, depth_intrin, depth_frame = self.real_sense.get_aligned_images()
                 color_frame = cv2.flip(color_frame, 1)
+                if debug and self.color_img_writer is not None:
+                    self.color_img_writer.write(color_frame)
+                    # self.depth_img_writer.write(depth_image)
                 out = self.tracker.track(color_frame)
                 state = [int(s) for s in out['target_bbox']]
                 if len(state) == 0:
@@ -122,10 +136,11 @@ class Track(Node):
                 if debug:
                     cv2.rectangle(color_frame, (state[0], state[1]), (state[2] + state[0], state[3] + state[1]),
                                   (0, 0, 255), 5)
-                    cv2.circle(color_frame, (state[0] + state[2] // 2, state[1] + state[3] * 2 // 3), 5,
+                    cv2.circle(color_frame, (state[0] + state[2] // 2, state[1] + state[3] // 2), 5,
                                (0, 0, 255), -1)
                     self.result_img = color_frame
                     self.publish_img(debug)
+                    # cv2.imshow("depth", depth_image)
                     # cv2.imshow("track", color_frame)
                     # cv2.waitKey(1)
 
@@ -135,20 +150,48 @@ class Track(Node):
                     self.message.layout.dim[0].label = "detections"
                     self.message.layout.dim[0].size = 1
                     self.message.layout.dim[0].stride = 5
-
-                distance = self.real_sense.get_coordinate_3d(state[0] + state[2] // 2, state[1] + state[3] * 2 // 3,
-                                                             depth_frame)
+                distance = 0
+                skip = 0
+                min_dis = 5000
+                for i in range(5):
+                    for j in range(5):
+                        tmp = self.real_sense.get_coordinate_3d(640 - (state[0] + state[2] // 2 + (i - 3)),
+                                                                state[1] + state[3] // 2 + (j - 3),depth_frame)
+                        if tmp < 0.01 or tmp > 5:
+                            skip += 1
+                        else:
+                            min_dis = min(min_dis, tmp)
+                            distance += tmp
+                if skip == 25:
+                    distance = 0
+                else:
+                    distance = distance / (25.0 - skip)
+                print("distance = ", distance, "min_dis = ", min_dis)
                 flattened_data = [state[0], state[1], state[2] + state[0], state[3] + state[1], int(distance * 1000)]
                 self.message.data = flattened_data
                 self.track_result_publisher.publish(self.message)
 
     def start_track_callback(self, msg):
-        if msg.data == 3:
+        if msg.data == 1:
+            self.img_writer_index += 1
+            if self.color_img_writer is None:
+                self.color_img_writer = cv2.VideoWriter(f'rgb_output{self.img_writer_index}.avi', cv2.VideoWriter_fourcc(*'XVID'), 15, (640, 480))
+            #     self.depth_img_writer = cv2.VideoWriter(f'depth_output{self.img_writer_index}.avi', cv2.VideoWriter_fourcc(*'XVID'), 15, (640, 480))
+
+        elif msg.data == 3:
             self.start_track = True
+
+
         elif msg.data == 9:
             self.start_track = False
             self.init_track = False
             self.result_img = None
+            if self.color_img_writer is not None:
+                self.color_img_writer.release()
+                self.color_img_writer = None
+            if self.depth_img_writer is not None:
+                self.depth_img_writer.release()
+                self.depth_img_writer = None
 
 
 def main(args=None):

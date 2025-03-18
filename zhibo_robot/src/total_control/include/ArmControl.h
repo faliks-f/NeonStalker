@@ -47,6 +47,8 @@ private:
     std::mutex m_curPoseStatusMutex;
     std::vector<double> m_curPoseStatus;
 
+    std::vector<double> m_initPos;
+
     // 1 for joint move; 2 for pose move
 //    std::atomic<WaitMode> m_waitMode = WaitMode::JOINT_MOVE;
 
@@ -61,6 +63,11 @@ private:
     std::atomic<int> m_moveHorizontalDirection = 0;
     // -1: down, 1: up, 0: stop
     std::atomic<int> m_moveVerticalDirection = -1;
+
+    double m_horizontalDiff = 0;
+    double m_verticalDiff = 0;
+
+
 
     rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr m_bottomArmAnglePub;
 
@@ -88,6 +95,8 @@ public:
 //    bool waitMoveComplete();
 
     void move();
+
+    void move2();
 
 
     void clawGripper();

@@ -17,9 +17,12 @@ private:
     std::atomic<double> m_armBottomAngle = 0.0;
     std::atomic<double> m_armHeightAngle = 0.0;
     std::atomic<bool> m_blocked = false;
+    std::atomic<bool> m_rotate2Forward = false;
 
     std::queue<int16_t> m_trackResult;
     int16_t m_distance = 0;
+
+    int m_count = 0;
 
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr m_cmdVelPub;
 public:
@@ -36,6 +39,8 @@ public:
     void laserScanCallback(const sensor_msgs::msg::LaserScan &scan);
 
     void stop();
+
+    void rotate2Forward();
 };
 
 

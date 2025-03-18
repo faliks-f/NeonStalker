@@ -30,7 +30,7 @@ private:
     std::shared_ptr<CarControl> m_carControl;
 
 
-    rclcpp::TimerBase::SharedPtr m_timer;
+    rclcpp::TimerBase::SharedPtr m_timer1;
 
     bool m_start = false;
 
@@ -39,7 +39,9 @@ public:
 
     ~TotalControlNode() override = default;
 
-    void control();
+    void armControl();
+
+    void carControl();
 
     void trackResultCallback(const std_msgs::msg::Int16MultiArray& msg);
 

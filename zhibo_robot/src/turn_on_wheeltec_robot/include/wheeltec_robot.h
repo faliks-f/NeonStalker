@@ -123,7 +123,7 @@ class TurnOnRobot {
 public:
     TurnOnRobot();  //Constructor //构造函数
     ~TurnOnRobot(); //Destructor //析构函数
-    void control();   //Loop control code //循环控制代码
+    void control();   //Loop armControl code //循环控制代码
 
 private:
     rclcpp::Node::SharedPtr m_node; //Create a ROS node handle //创建ROS节点句柄

@@ -189,16 +189,16 @@ class C_PiperRosNode(Node):
         Args:
             pos_data ():
         """
-        self.get_logger().info(f"Received PosCmd:")
-        self.get_logger().info(f"x: {pos_data.x}")
-        self.get_logger().info(f"y: {pos_data.y}")
-        self.get_logger().info(f"z: {pos_data.z}")
-        self.get_logger().info(f"roll: {pos_data.roll}")
-        self.get_logger().info(f"pitch: {pos_data.pitch}")
-        self.get_logger().info(f"yaw: {pos_data.yaw}")
-        self.get_logger().info(f"gripper: {pos_data.gripper}")
-        self.get_logger().info(f"mode1: {pos_data.mode1}")
-        self.get_logger().info(f"mode2: {pos_data.mode2}")
+        # self.get_logger().info(f"Received PosCmd:")
+        # self.get_logger().info(f"x: {pos_data.x}")
+        # self.get_logger().info(f"y: {pos_data.y}")
+        # self.get_logger().info(f"z: {pos_data.z}")
+        # self.get_logger().info(f"roll: {pos_data.roll}")
+        # self.get_logger().info(f"pitch: {pos_data.pitch}")
+        # self.get_logger().info(f"yaw: {pos_data.yaw}")
+        # self.get_logger().info(f"gripper: {pos_data.gripper}")
+        # self.get_logger().info(f"mode1: {pos_data.mode1}")
+        # self.get_logger().info(f"mode2: {pos_data.mode2}")
         x = round(pos_data.x*1000)
         y = round(pos_data.y*1000)
         z = round(pos_data.z*1000)
@@ -208,7 +208,7 @@ class C_PiperRosNode(Node):
         # return
         if(self.GetEnableFlag()):
             self.piper.MotionCtrl_1(0x00, 0x00, 0x00)
-            self.piper.MotionCtrl_2(0x01, 0x02, 100)
+            self.piper.MotionCtrl_2(0x01, 0x02, 60)
             self.piper.EndPoseCtrl(x, y, z,
                                    rx, ry, rz)
             # gripper = round(pos_data.gripper*1000*1000)
@@ -225,16 +225,16 @@ class C_PiperRosNode(Node):
         Args:
             pos_data ():
         """
-        self.get_logger().info(f"Received PosCmd:")
-        self.get_logger().info(f"x: {pos_data.x}")
-        self.get_logger().info(f"y: {pos_data.y}")
-        self.get_logger().info(f"z: {pos_data.z}")
-        self.get_logger().info(f"roll: {pos_data.roll}")
-        self.get_logger().info(f"pitch: {pos_data.pitch}")
-        self.get_logger().info(f"yaw: {pos_data.yaw}")
-        self.get_logger().info(f"gripper: {pos_data.gripper}")
-        self.get_logger().info(f"mode1: {pos_data.mode1}")
-        self.get_logger().info(f"mode2: {pos_data.mode2}")
+        # self.get_logger().info(f"Received PosCmd:")
+        # self.get_logger().info(f"x: {pos_data.x}")
+        # self.get_logger().info(f"y: {pos_data.y}")
+        # self.get_logger().info(f"z: {pos_data.z}")
+        # self.get_logger().info(f"roll: {pos_data.roll}")
+        # self.get_logger().info(f"pitch: {pos_data.pitch}")
+        # self.get_logger().info(f"yaw: {pos_data.yaw}")
+        # self.get_logger().info(f"gripper: {pos_data.gripper}")
+        # self.get_logger().info(f"mode1: {pos_data.mode1}")
+        # self.get_logger().info(f"mode2: {pos_data.mode2}")
         x = round(pos_data.x*1000)
         y = round(pos_data.y*1000)
         z = round(pos_data.z*1000)
@@ -256,14 +256,14 @@ class C_PiperRosNode(Node):
         """
         factor = 57324.840764 #1000*180/3.14
         factor1 = 57.32484
-        self.get_logger().info(f"Received Joint States:")
-        self.get_logger().info(f"joint_0: {joint_data.position[0]}")
-        self.get_logger().info(f"joint_1: {joint_data.position[1]}")
-        self.get_logger().info(f"joint_2: {joint_data.position[2]}")
-        self.get_logger().info(f"joint_3: {joint_data.position[3]}")
-        self.get_logger().info(f"joint_4: {joint_data.position[4]}")
-        self.get_logger().info(f"joint_5: {joint_data.position[5]}")
-        self.get_logger().info(f"joint_6: {joint_data.position[6]}")
+        # self.get_logger().info(f"Received Joint States:")
+        # self.get_logger().info(f"joint_0: {joint_data.position[0]}")
+        # self.get_logger().info(f"joint_1: {joint_data.position[1]}")
+        # self.get_logger().info(f"joint_2: {joint_data.position[2]}")
+        # self.get_logger().info(f"joint_3: {joint_data.position[3]}")
+        # self.get_logger().info(f"joint_4: {joint_data.position[4]}")
+        # self.get_logger().info(f"joint_5: {joint_data.position[5]}")
+        # self.get_logger().info(f"joint_6: {joint_data.position[6]}")
         joint_0 = round(joint_data.position[0]*factor)
         joint_1 = round(joint_data.position[1]*factor)
         joint_2 = round(joint_data.position[2]*factor)
@@ -286,8 +286,8 @@ class C_PiperRosNode(Node):
                     vel_all = round(joint_data.velocity[6])
                     if (vel_all > 100): vel_all = 100
                     if (vel_all < 0): vel_all = 0
-                    self.get_logger().info(f"vel_all: {vel_all}")
-                    self.piper.MotionCtrl_2(0x01, 0x01, vel_all)
+                    # self.get_logger().info(f"vel_all: {vel_all}")
+                    self.piper.MotionCtrl_2(0x01, 0x01, 30)
                 # elif(lens == 7):
                 #     # 遍历速度列表
                 #     for i, velocity in enumerate(joint_data.velocity):

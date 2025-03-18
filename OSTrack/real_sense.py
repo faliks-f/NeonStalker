@@ -39,14 +39,15 @@ class RealsenseCamera:
         # Convert images to numpy arrays
         depth_image = np.asanyarray(depth_frame.get_data())
         color_image = np.asanyarray(color_frame.get_data())
-        depth_intrin = depth_frame.profile.as_video_stream_profile().intrinsics
 
+        depth_intrin = depth_frame.profile.as_video_stream_profile().intrinsics
+        depth_image = cv2.normalize(depth_image, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
         # return opencv image
         return color_image, depth_image, depth_intrin, depth_frame
 
     @staticmethod
     def get_coordinate_3d(x, y, depth_frame):
         dist = depth_frame.get_distance(x, y)
-        print("distance = ", dist)
+        # print("distance = ", dist)
         return dist
         # return rs.rs2_deproject_pixel_to_point(depth_intrin, [x, y], dist)

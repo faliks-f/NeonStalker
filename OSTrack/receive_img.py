@@ -26,8 +26,6 @@ class CameraSubscriber(Node):
         self.i = 0
 
     def image_callback(self, msg):
-        self.i += 1
-        print(f"Received image {self.i}")
         np_arr = cv2.imdecode(np.frombuffer(msg.data, np.uint8), cv2.IMREAD_COLOR)
         cv2.imshow("Received Image", np_arr)
         cv2.waitKey(1)
