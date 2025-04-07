@@ -1,3 +1,4 @@
+import time
 from typing import Dict, Tuple
 
 import PIL
@@ -35,6 +36,25 @@ class RealsenseCamera:
         aligned_frames = self.align.process(frames)
         depth_frame = aligned_frames.get_depth_frame()
         color_frame = aligned_frames.get_color_frame()
+        # Convert images to numpy arrays
+        depth_image = np.asanyarray(depth_frame.get_data())
+        color_image = np.asanyarray(color_frame.get_data())
+
+        depth_intrin = depth_frame.profile.as_video_stream_profile().intrinsics
+        depth_image = cv2.normalize(depth_image, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+        # return opencv image
+        return color_image, depth_image, depth_intrin, depth_frame
+
+    def get_aligned_images_for_test(self) -> Tuple:
+        # Wait for a coherent pair of frames: depth and color
+        time1 = time.time()
+        frames = self.pipeline.wait_for_frames()
+        aligned_frames = self.align.process(frames)
+        depth_frame = aligned_frames.get_depth_frame()
+        color_frame = aligned_frames.get_color_frame()
+
+        time2 = time.time()
+        print("depth frame time: ", time2 - time1)
 
         # Convert images to numpy arrays
         depth_image = np.asanyarray(depth_frame.get_data())
@@ -47,6 +67,7 @@ class RealsenseCamera:
 
     @staticmethod
     def get_coordinate_3d(x, y, depth_frame):
+        # return 0
         dist = depth_frame.get_distance(x, y)
         # print("distance = ", dist)
         return dist
